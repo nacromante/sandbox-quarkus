@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.time.Month;
 
 @Data
-public class EntryDto {
+public class EntrySaveDto {
 
     @Max(value = 10)
     private String description;

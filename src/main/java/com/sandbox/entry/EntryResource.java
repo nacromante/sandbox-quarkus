@@ -1,34 +1,48 @@
 package com.sandbox.entry;
 
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import com.sandbox.exception.BeanValidationException;
+import com.sandbox.wrapper.ResponseWrapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-@Path("/entries")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+import javax.validation.ConstraintViolationException;
+import java.util.List;
+
+@RestController
+@RequestMapping("entries")
 public class EntryResource {
 
-    @Inject
+    @Autowired
+    @Qualifier("entryService")
     private EntryService entryService;
 
-    @POST
-    public void saveEntry(EntryDto entryDto)
-    {
-        entryService.save(entryDto);
+    @PostMapping
+    public ResponseEntity<Object> saveEntry(EntrySaveDto entrySaveDto) {
+        try{
+            entryService.save(entrySaveDto);
+        } catch (ConstraintViolationException e) {
+            throw  new BeanValidationException(e.getConstraintViolations());
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GET
-    public Iterable<Entry> getEntries()
-    {
-        return  entryService.findAll();
+    @PutMapping("{id}")
+    public void saveEntry(EntrySaveDto entrySaveDto, @PathVariable(value = "id") Integer entryId) {
+        entryService.update(entrySaveDto, entryId);
+
+    }
+
+    @GetMapping
+    public ResponseWrapper<List<EntryListDto>> getEntries() {
+        return new ResponseWrapper<List<EntryListDto>>(entryService.findAll());
     }
 
 
-    @DELETE
-    @Path("{id}")
-    public void deleteEntry(@PathParam(value = "id") Integer entryId)
-    {
+    @DeleteMapping("{id}")
+    public void deleteEntry(@PathVariable(value = "id") Integer entryId) {
         entryService.remove(entryId);
     }
 }
